@@ -1,0 +1,76 @@
+# =============================================================================
+# default_config.yaml — Ensemble Management Zone Delineation
+# Extracted from 04_R_management_zones_combined.R CFG list
+# All 38 parameters with exact original values
+# =============================================================================
+
+# ---- paths ----------------------------------------------------------------
+pca_raster: "data/embedding_pca.tif"
+soil_csv: "data/soilgrids_with_embeddings.csv"
+
+# ---- input ----------------------------------------------------------------
+crs_code: 32717
+lon_col: "longitude"
+lat_col: "latitude"
+target_vars: ["BD", "CEC", "Fragm", "Sand", "Silt", "Clay", "N", "OCD", "pH", "SOC"]
+
+# ---- pca ------------------------------------------------------------------
+n_pcs_cluster: 10
+
+# ---- fcm (k-selection only, plain CMeans from geocmeans) -----------------
+k_min: 2
+k_max: 10
+k_final: null
+fuzziness: 1.5
+fcm_nstart: 20
+sample_size_ksel: 5000
+sample_size_sil: 2000
+sample_size_fcm: 30000
+
+# ---- sfcm (geocmeans::SFCMeans — spatial fuzzy c-means) ------------------
+# alpha = weight of the spatial lag in the membership update (Cai 2007).
+#   0   = pure FCM (no spatial context)
+#   1   = balanced attribute / spatial
+#   1.5 = twice the weight on space
+sfcm_alpha_grid: [0.0, 0.25, 0.5, 0.75, 1.0, 1.25, 1.5]
+sfcm_window_sizes: [3, 5, 7]      # square odd windows (map units in cells)
+sfcm_lag_method: "mean"            # mean / median / nl
+sfcm_nstart: 5                     # restarts for initial centres
+sfcm_maxiter: 200
+sfcm_tol: 0.01
+sfcm_chunk_size: 4                 # raster chunking for full-grid SFCM
+sfcm_alpha_sel_size: 60000         # subsample for alpha/window sweep
+sfcm_init: "kpp"                   # kpp | random (initial centres)
+
+# ---- kriging (pathway B: SFI) ---------------------------------------------
+sfi_vars:
+  SOC: {role: "more_better", a: 5,   b: 25}
+  "N": {role: "more_better", a: 0.5, b: 5.0}
+  CEC: {role: "more_better", a: 5,   b: 30}
+  pH:  {role: "optimum",     a: 6.2, b: 7.2}
+  BD:  {role: "less_better", a: 1.2, b: 1.5}
+
+sfi_ahp_weights:
+  SOC: 0.35
+  "N": 0.28
+  CEC: 0.18
+  pH: 0.12
+  BD: 0.07
+
+sfi_breaks: [0.0, 0.25, 0.50, 0.75, 0.90, 1.0]
+sfi_labels: ["Very Low", "Low", "Moderate", "High", "Very High"]
+
+# ---- output ---------------------------------------------------------------
+thresh:
+  SOC_low: 10
+  SOC_high: 20
+  pH_low: 5.8
+  pH_high: 7.2
+  CEC_low: 10
+  CEC_high: 25
+
+plot_max_cells: 200000
+
+out_data: "data/"
+out_figures: "figures/"
+out_results: "outputs/"
